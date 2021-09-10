@@ -38,7 +38,7 @@ BUNDLE_IMG ?= $(IMAGE_TAG_BASE)-bundle:v$(VERSION)
 # Image URL to use all building/pushing image targets
 REG ?= quay.io
 ORG ?= lunarway
-PROJECT=postgresql-controller
+PROJECT=cluster-identity-controller
 TAG ?= latest
 IMG ?= ${REG}/${ORG}/${PROJECT}:${TAG}
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
