@@ -7,4 +7,10 @@ plugins:
   scorecard.sdk.operatorframework.io/v2: {}
 projectName: cluster-identity-controller
 repo: github.com/lunarway/cluster-identity-controller
+resources:
+- controller: true
+  group: core
+  kind: Pod
+  path: k8s.io/api/core/v1
+  version: v1
 version: "3"
