@@ -52,7 +52,7 @@ func (r *PodReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 		return ctrl.Result{}, nil
 	}
 
-	logger.Info("Reconciling a kube-controller-manager pod")
+	logger.Info(fmt.Sprintf("Reconciling a kube-controller-manager pod '%s'", req.String()))
 
 	var pod corev1.Pod
 	err := r.Client.Get(ctx, req.NamespacedName, &pod)
