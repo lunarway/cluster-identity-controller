@@ -118,7 +118,7 @@ func TestPodController(t *testing.T) {
 		assert.Equal(t, ctrl.Result{}, result)
 	})
 
-	t.Run("requeue when kube-controller-manager is not found", func(t *testing.T) {
+	t.Run("not fail when kube-controller-manager is deleted", func(t *testing.T) {
 		reconciler, _ := setup(t, configMapKey, []client.Object{
 			&injectableNamespace,
 			&nonInjectableNamespace,
@@ -132,9 +132,7 @@ func TestPodController(t *testing.T) {
 		})
 
 		assert.NoError(t, err)
-		assert.Equal(t, ctrl.Result{
-			Requeue: true,
-		}, result)
+		assert.Equal(t, ctrl.Result{}, result)
 	})
 }
 

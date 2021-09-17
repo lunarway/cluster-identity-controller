@@ -58,8 +58,7 @@ func (r *PodReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 	err := r.Client.Get(ctx, req.NamespacedName, &pod)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
-			logger.Info("Could not find kube-controller-manager pod. Requing")
-			return ctrl.Result{Requeue: true}, nil
+			return ctrl.Result{Requeue: false}, nil
 		}
 		return ctrl.Result{}, err
 	}
