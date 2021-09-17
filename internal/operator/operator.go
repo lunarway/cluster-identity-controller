@@ -22,7 +22,7 @@ func ClusterNameFromPod(pod *corev1.Pod) (string, error) {
 			continue
 		}
 
-		name := find(container.Args, kubeControllerManagerContainerArgumentPrefix)
+		name := find(kubeControllerManagerContainerArgumentPrefix, container.Args)
 		if name == "" {
 			return "", fmt.Errorf("could not find '%s' flag in container '%s'", kubeControllerManagerContainerArgumentPrefix, container.Name)
 		}
@@ -31,7 +31,7 @@ func ClusterNameFromPod(pod *corev1.Pod) (string, error) {
 	return "", fmt.Errorf("could not find container with name '%s'", kubeControllerManagerContainerName)
 }
 
-func find(stack []string, needle string) string {
+func find(needle string, stack []string) string {
 	for _, s := range stack {
 		if strings.HasPrefix(s, needle) {
 			return s
