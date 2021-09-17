@@ -114,7 +114,7 @@ func TestPodController(t *testing.T) {
 			},
 		})
 
-		assert.EqualError(t, err, "could not find --cluster-name flag in container 'kube-controller-manager'")
+		assert.EqualError(t, err, "could not find '--cluster-name=' flag in container 'kube-controller-manager'")
 		assert.Equal(t, ctrl.Result{}, result)
 	})
 
