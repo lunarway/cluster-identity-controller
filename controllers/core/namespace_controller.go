@@ -18,9 +18,12 @@ package core
 
 import (
 	"context"
+	"fmt"
 
+	"github.com/lunarway/cluster-identity-controller/internal/operator"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/runtime"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -29,7 +32,7 @@ import (
 // NamespaceReconciler reconciles a Namespace object
 type NamespaceReconciler struct {
 	client.Client
-	Scheme *runtime.Scheme
+	ConfigMapKey string
 }
 
 //+kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch
@@ -39,9 +42,38 @@ type NamespaceReconciler struct {
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
 func (r *NamespaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = log.FromContext(ctx)
+	logger := log.FromContext(ctx)
+	logger.Info("Reconciling namespace")
 
-	// your logic here
+	var namespace corev1.Namespace
+	err := r.Client.Get(ctx, req.NamespacedName, &namespace)
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return ctrl.Result{Requeue: false}, nil
+		}
+		return ctrl.Result{}, err
+	}
+
+	isInjectable := operator.IsNamespaceInjectable(namespace, operator.InjectionAnnotation)
+	if !isInjectable {
+		logger.Info("namespace is not injectable. Skipping.")
+		return ctrl.Result{}, nil
+	}
+
+	clusterName, err := operator.GetClusterName(ctx, r.Client)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	err = operator.CreateOrUpdateConfigMap(ctx, r.Client, types.NamespacedName{
+		Namespace: req.Name,
+		Name:      r.ConfigMapKey,
+	}, clusterName)
+	if err != nil {
+		return ctrl.Result{}, fmt.Errorf("store cluster clusterName '%s' in configmap: %w", clusterName, err)
+	}
+
+	logger.Info("Completed reconciliation of namespace")
 
 	return ctrl.Result{}, nil
 }

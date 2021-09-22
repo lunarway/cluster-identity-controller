@@ -25,7 +25,6 @@ import (
 	"go.uber.org/multierr"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -78,7 +77,7 @@ func (r *PodReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 
 	logger.Info(fmt.Sprintf("Found %d namespaces: %v", len(namespaces), namespaces))
 
-	err = r.storeInConfigMap(ctx, namespaces, clusterName)
+	err = r.storeInConfigMaps(ctx, namespaces, clusterName)
 	if err != nil {
 		return ctrl.Result{}, fmt.Errorf("store cluster name '%s' in configmap: %w", clusterName, err)
 	}
@@ -104,17 +103,17 @@ func (r *PodReconciler) getNamespacesForInjections(ctx context.Context, injectio
 
 	var namespaces []string
 	for _, namespace := range namespaceList.Items {
-		if namespace.Annotations[injectionSelector] == "true" {
+		if operator.IsNamespaceInjectable(namespace, injectionSelector) {
 			namespaces = append(namespaces, namespace.Name)
 		}
 	}
 	return namespaces, nil
 }
 
-func (r *PodReconciler) storeInConfigMap(ctx context.Context, namespaces []string, clusterName string) error {
+func (r *PodReconciler) storeInConfigMaps(ctx context.Context, namespaces []string, clusterName string) error {
 	var errs error
 	for _, namespace := range namespaces {
-		err := r.createOrUpdateConfigMap(ctx, types.NamespacedName{
+		err := operator.CreateOrUpdateConfigMap(ctx, r.Client, types.NamespacedName{
 			Namespace: namespace,
 			Name:      r.ConfigMapKey,
 		}, clusterName)
@@ -124,53 +123,4 @@ func (r *PodReconciler) storeInConfigMap(ctx context.Context, namespaces []strin
 	}
 
 	return errs
-}
-
-func (r *PodReconciler) createOrUpdateConfigMap(ctx context.Context, nn types.NamespacedName, clusterName string) error {
-	var cm corev1.ConfigMap
-	err := r.Client.Get(ctx, nn, &cm)
-	if err != nil {
-		if !apierrors.IsNotFound(err) {
-			return fmt.Errorf("get ConfigMap '%s': %w", nn, err)
-		}
-
-		err := r.createConfigMap(ctx, nn, clusterName)
-		if err != nil {
-			return fmt.Errorf("create configmap: %w", err)
-		}
-
-		return nil
-	}
-
-	err = r.updateConfigMap(ctx, cm, clusterName)
-	if err != nil {
-		return fmt.Errorf("update configmap: %w", err)
-	}
-
-	return nil
-}
-
-func (r *PodReconciler) createConfigMap(ctx context.Context, nn types.NamespacedName, clusterName string) error {
-	log.FromContext(ctx).Info(fmt.Sprintf("Creating ConfigMap '%s' with clusterName '%s'", nn.String(), clusterName))
-	return r.Create(ctx, &corev1.ConfigMap{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "ConfigMap",
-			APIVersion: "v1",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:        "cluster-identity",
-			Namespace:   nn.Namespace,
-			Labels:      nil,
-			Annotations: nil,
-		},
-		Data: map[string]string{
-			"clusterName": clusterName,
-		},
-	})
-}
-
-func (r *PodReconciler) updateConfigMap(ctx context.Context, cm corev1.ConfigMap, clusterName string) error {
-	log.FromContext(ctx).Info(fmt.Sprintf("Updating ConfigMap '%s/%s' with clusterName '%s'", cm.ObjectMeta.Namespace, cm.ObjectMeta.Name, clusterName))
-	cm.Data["clusterName"] = clusterName
-	return r.Update(ctx, &cm)
 }
