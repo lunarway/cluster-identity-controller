@@ -8,19 +8,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func nonInjectableNamespace() corev1.Namespace {
-	return corev1.Namespace{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Namespace",
-			APIVersion: "v1",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:        "non-injectable",
-			Annotations: map[string]string{},
-		},
-	}
-}
-
 func kubeControllerManagerPod(clusterName string) corev1.Pod {
 	return corev1.Pod{
 		TypeMeta: metav1.TypeMeta{
@@ -77,6 +64,19 @@ func injectableNamespace() corev1.Namespace {
 			Annotations: map[string]string{
 				operator.InjectionAnnotation: "true",
 			},
+		},
+	}
+}
+
+func nonInjectableNamespace() corev1.Namespace {
+	return corev1.Namespace{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Namespace",
+			APIVersion: "v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:        "non-injectable",
+			Annotations: map[string]string{},
 		},
 	}
 }
