@@ -81,8 +81,8 @@ func find(needle string, stack []string) string {
 	return ""
 }
 
-func IsNamespaceInjectable(namespace corev1.Namespace, injectionSelector string) bool {
-	return namespace.Annotations[injectionSelector] == "true"
+func IsNamespaceInjectable(namespace corev1.Namespace) bool {
+	return namespace.Annotations[InjectionAnnotation] == "true"
 }
 
 func CreateOrUpdateConfigMap(ctx context.Context, apiClient client.Client, nn types.NamespacedName, clusterName string) error {

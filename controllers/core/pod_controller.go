@@ -70,7 +70,7 @@ func (r *PodReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 	}
 	logger.Info(fmt.Sprintf("Found cluster name '%s'", clusterName))
 
-	namespaces, err := r.getNamespacesForInjections(ctx, operator.InjectionAnnotation)
+	namespaces, err := r.getNamespacesForInjections(ctx)
 	if err != nil {
 		return ctrl.Result{}, fmt.Errorf("get namespaces: %w", err)
 	}
@@ -94,7 +94,7 @@ func (r *PodReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-func (r *PodReconciler) getNamespacesForInjections(ctx context.Context, injectionSelector string) ([]string, error) {
+func (r *PodReconciler) getNamespacesForInjections(ctx context.Context) ([]string, error) {
 	var namespaceList corev1.NamespaceList
 	err := r.Client.List(ctx, &namespaceList)
 	if err != nil {
@@ -103,7 +103,7 @@ func (r *PodReconciler) getNamespacesForInjections(ctx context.Context, injectio
 
 	var namespaces []string
 	for _, namespace := range namespaceList.Items {
-		if operator.IsNamespaceInjectable(namespace, injectionSelector) {
+		if operator.IsNamespaceInjectable(namespace) {
 			namespaces = append(namespaces, namespace.Name)
 		}
 	}

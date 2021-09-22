@@ -54,7 +54,7 @@ func (r *NamespaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, err
 	}
 
-	isInjectable := operator.IsNamespaceInjectable(namespace, operator.InjectionAnnotation)
+	isInjectable := operator.IsNamespaceInjectable(namespace)
 	if !isInjectable {
 		logger.Info("namespace is not injectable. Skipping.")
 		return ctrl.Result{}, nil
