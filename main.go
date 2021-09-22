@@ -86,8 +86,8 @@ func main() {
 		os.Exit(1)
 	}
 	if err = (&corecontrollers.NamespaceReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
+		Client:       mgr.GetClient(),
+		ConfigMapKey: configMapKey,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Namespace")
 		os.Exit(1)

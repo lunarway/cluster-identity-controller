@@ -16,17 +16,20 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 )
 
-func setupPodReconciler(t *testing.T, configMapKey string, objects []client.Object) (*PodReconciler, client.Client) {
+func setupNamespaceReconciler(t *testing.T, configMapKey string, objects []client.Object) (*NamespaceReconciler, client.Client) {
 	t.Helper()
 
 	s := scheme.Scheme
 	s.AddKnownTypes(corev1.SchemeGroupVersion, &corev1.Namespace{})
+	s.AddKnownTypes(corev1.SchemeGroupVersion, &corev1.NamespaceList{})
+	s.AddKnownTypes(corev1.SchemeGroupVersion, &corev1.Pod{})
+	s.AddKnownTypes(corev1.SchemeGroupVersion, &corev1.PodList{})
 
 	client := fake.NewClientBuilder().
 		WithObjects(objects...).
 		Build()
 
-	reconciler := &PodReconciler{
+	reconciler := &NamespaceReconciler{
 		Client:       client,
 		ConfigMapKey: configMapKey,
 	}
@@ -34,7 +37,7 @@ func setupPodReconciler(t *testing.T, configMapKey string, objects []client.Obje
 	return reconciler, client
 }
 
-func TestPodController(t *testing.T) {
+func TestNamespaceController(t *testing.T) {
 	logf.SetLogger(zap.New(zap.WriteTo(os.Stdout), zap.UseDevMode(true)))
 	var (
 		clusterName  = "k8s-202109170606.lunar.tech"
@@ -46,17 +49,33 @@ func TestPodController(t *testing.T) {
 		clusterIdentityConfigMap = clusterIdentityConfigMap(injectableNamespace.Name, configMapKey)
 	)
 
-	t.Run("inject to injectable namespaces", func(t *testing.T) {
-		reconciler, client := setupPodReconciler(t, configMapKey, []client.Object{
-			&injectableNamespace,
-			&nonInjectableNamespace,
+	t.Run("Not inject to nonInjectable namespaces", func(t *testing.T) {
+		reconciler, _ := setupNamespaceReconciler(t, configMapKey, []client.Object{
 			&controllerManagerPod,
+			&nonInjectableNamespace,
 		})
 
 		result, err := reconciler.Reconcile(context.Background(), ctrl.Request{
 			NamespacedName: types.NamespacedName{
-				Namespace: controllerManagerPod.Namespace,
-				Name:      controllerManagerPod.Name,
+				Namespace: nonInjectableNamespace.Namespace,
+				Name:      nonInjectableNamespace.Name,
+			},
+		})
+
+		assert.NoError(t, err)
+		assert.Equal(t, ctrl.Result{}, result)
+	})
+
+	t.Run("inject to injectable namespaces", func(t *testing.T) {
+		reconciler, client := setupNamespaceReconciler(t, configMapKey, []client.Object{
+			&controllerManagerPod,
+			&injectableNamespace,
+		})
+
+		result, err := reconciler.Reconcile(context.Background(), ctrl.Request{
+			NamespacedName: types.NamespacedName{
+				Namespace: injectableNamespace.Namespace,
+				Name:      injectableNamespace.Name,
 			},
 		})
 
@@ -69,17 +88,16 @@ func TestPodController(t *testing.T) {
 	})
 
 	t.Run("update injectable namespaces", func(t *testing.T) {
-		reconciler, client := setupPodReconciler(t, configMapKey, []client.Object{
+		reconciler, client := setupNamespaceReconciler(t, configMapKey, []client.Object{
 			&injectableNamespace,
-			&nonInjectableNamespace,
 			&controllerManagerPod,
 			&clusterIdentityConfigMap,
 		})
 
 		result, err := reconciler.Reconcile(context.Background(), ctrl.Request{
 			NamespacedName: types.NamespacedName{
-				Namespace: controllerManagerPod.Namespace,
-				Name:      controllerManagerPod.Name,
+				Namespace: injectableNamespace.Namespace,
+				Name:      injectableNamespace.Name,
 			},
 		})
 
@@ -96,37 +114,19 @@ func TestPodController(t *testing.T) {
 		controllerManagerPod = kubeControllerManagerPod(clusterName)
 		controllerManagerPod.Spec.Containers[0].Args = nil
 
-		reconciler, _ := setupPodReconciler(t, configMapKey, []client.Object{
+		reconciler, _ := setupNamespaceReconciler(t, configMapKey, []client.Object{
 			&injectableNamespace,
-			&nonInjectableNamespace,
 			&controllerManagerPod,
 		})
 
 		result, err := reconciler.Reconcile(context.Background(), ctrl.Request{
 			NamespacedName: types.NamespacedName{
-				Namespace: controllerManagerPod.Namespace,
-				Name:      controllerManagerPod.Name,
+				Namespace: injectableNamespace.Namespace,
+				Name:      injectableNamespace.Name,
 			},
 		})
 
 		assert.EqualError(t, err, "could not find '--cluster-name=' flag in container 'kube-controller-manager'")
-		assert.Equal(t, ctrl.Result{}, result)
-	})
-
-	t.Run("not fail when kube-controller-manager is deleted", func(t *testing.T) {
-		reconciler, _ := setupPodReconciler(t, configMapKey, []client.Object{
-			&injectableNamespace,
-			&nonInjectableNamespace,
-		})
-
-		result, err := reconciler.Reconcile(context.Background(), ctrl.Request{
-			NamespacedName: types.NamespacedName{
-				Namespace: controllerManagerPod.Namespace,
-				Name:      controllerManagerPod.Name,
-			},
-		})
-
-		assert.NoError(t, err)
 		assert.Equal(t, ctrl.Result{}, result)
 	})
 }
