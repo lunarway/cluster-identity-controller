@@ -44,10 +44,34 @@ func TestNamespaceController(t *testing.T) {
 		configMapKey = "cluster-identity"
 
 		controllerManagerPod     = kubeControllerManagerPod(clusterName)
+		coreDnsAutoScalerPod     = corednsAutoscalerPod(clusterName)
 		injectableNamespace      = injectableNamespace()
 		nonInjectableNamespace   = nonInjectableNamespace()
 		clusterIdentityConfigMap = clusterIdentityConfigMap(injectableNamespace.Name, configMapKey)
 	)
+
+	t.Run("update injectable namespaces via CoreDnsAutoScalerPod", func(t *testing.T) {
+		reconciler, client := setupNamespaceReconciler(t, configMapKey, []client.Object{
+			&injectableNamespace,
+			&coreDnsAutoScalerPod,
+			&clusterIdentityConfigMap,
+		})
+
+		result, err := reconciler.Reconcile(context.Background(), ctrl.Request{
+			NamespacedName: types.NamespacedName{
+				Namespace: injectableNamespace.Namespace,
+				Name:      injectableNamespace.Name,
+			},
+		})
+
+		assert.NoError(t, err)
+		assert.Equal(t, ctrl.Result{}, result)
+
+		checkNamespacesForConfigMap(t, client, injectableNamespace.Name, configMapKey, map[string]string{
+			"otherField":  "other",
+			"clusterName": "LendifyQAInfraUAT",
+		})
+	})
 
 	t.Run("Not inject to nonInjectable namespaces", func(t *testing.T) {
 		reconciler, _ := setupNamespaceReconciler(t, configMapKey, []client.Object{
@@ -87,7 +111,7 @@ func TestNamespaceController(t *testing.T) {
 		})
 	})
 
-	t.Run("update injectable namespaces", func(t *testing.T) {
+	t.Run("update injectable namespaces via controllerManagerPod", func(t *testing.T) {
 		reconciler, client := setupNamespaceReconciler(t, configMapKey, []client.Object{
 			&injectableNamespace,
 			&controllerManagerPod,

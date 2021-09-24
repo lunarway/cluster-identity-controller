@@ -8,6 +8,64 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+func corednsAutoscalerPod(clusterName string) corev1.Pod {
+	return corev1.Pod{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "Pod",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "coredns-autoscaler-54d55c8b75-pwkq8",
+			Namespace: "kube-system",
+			Labels: map[string]string{
+				"k8s-app":           "coredns-autoscaler",
+				"pod-template-hash": "54d55c8b75",
+			},
+			Annotations: map[string]string{
+				"cluster-autoscaler.kubernetes.io/safe-to-evict": "true",
+				"seccomp.security.alpha.kubernetes.io/pod":       "runtime/default",
+			},
+		},
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{
+				{
+					Name:  "autoscaler",
+					Image: "mcr.microsoft.com/oss/kubernetes/autoscaler/cluster-proportional-autoscaler:1.8.3",
+					Command: []string{
+						"/cluster-proportional-autoscaler",
+					},
+					Args: []string{
+						"--namespace=kube-system",
+						"--configmap=coredns-autoscaler",
+						"--target=deployment/coredns",
+						"--default-params={\"ladder\":{\"coresToReplicas\":[[1,2],[512,3],[1024,4],[2048,5]],\"nodesToReplicas\":[[1,2],[8,3],[16,4],[32,5]]}}",
+						"--logtostderr=true",
+						"--v=2",
+					},
+					Env: []corev1.EnvVar{
+						{
+							Name:  "KUBERNETES_PORT_443_TCP_ADDR",
+							Value: "lendifyqainfrauat-dns-42fc8372.hcp.westeurope.azmk8s.io",
+						},
+						{
+							Name:  "KUBERNETES_PORT",
+							Value: "tcp://lendifyqainfrauat-dns-42fc8372.hcp.westeurope.azmk8s.io:443",
+						},
+						{
+							Name:  "KUBERNETES_PORT_443_TCP",
+							Value: "tcp://lendifyqainfrauat-dns-42fc8372.hcp.westeurope.azmk8s.io:443",
+						},
+						{
+							Name:  "KUBERNETES_SERVICE_HOST",
+							Value: "lendifyqainfrauat-dns-42fc8372.hcp.westeurope.azmk8s.io",
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
 func kubeControllerManagerPod(clusterName string) corev1.Pod {
 	return corev1.Pod{
 		TypeMeta: metav1.TypeMeta{
