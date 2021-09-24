@@ -69,7 +69,7 @@ func TestNamespaceController(t *testing.T) {
 
 		checkNamespacesForConfigMap(t, client, injectableNamespace.Name, configMapKey, map[string]string{
 			"otherField":  "other",
-			"clusterName": "LendifyQAInfraUAT",
+			"clusterName": "lendifyqainfrauat",
 		})
 	})
 
