@@ -47,7 +47,7 @@ func getKubeControllerManagerPod(ctx context.Context, apiClient client.Client) (
 
 // KubeControllerClusterNameFromPod extracts the cluster name from a kube-controller-manager
 // Pod definition.
-func KubeControllerClusterNameFromPod(pod *corev1.Pod) string {
+func kubeControllerClusterNameFromPod(pod *corev1.Pod) string {
 	for _, container := range pod.Spec.Containers {
 		if container.Name != kubeControllerManagerContainerName {
 			continue
