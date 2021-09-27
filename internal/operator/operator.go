@@ -8,7 +8,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -71,18 +70,7 @@ func KubeControllerGetClusterName(ctx context.Context, apiClient client.Client) 
 func getCoreDNSAutoscalerPod(ctx context.Context, apiClient client.Client) (corev1.Pod, error) {
 	var podList corev1.PodList
 
-	labelSelector := metav1.LabelSelector{MatchLabels: map[string]string{CoreDNSAutoScalerLabelKey: CoreDNSAutoScalerLabelValue}}
-
-	listOptions := metav1.ListOptions{
-		LabelSelector: labels.Set(labelSelector.MatchLabels).String(),
-		Limit:         1,
-	}
-
-	// https://stackoverflow.com/questions/63142663/using-client-go-api-to-list-pods-managed-by-a-deployment-controller-not-working
-	// https://pkg.go.dev/k8s.io/client-go@v11.0.0+incompatible/kubernetes/typed/core/v1#PodInterface
-	// https://pkg.go.dev/k8s.io/client-go/kubernetes/typed/core/v1#CoreV1Client.Pods
-	podList, err := metav1.Pods(CoreDNSAutoScalerNamespace).List(listOptions)
-
+	err := apiClient.List(ctx, &podList, client.HasLabels{"%s=%s", CoreDNSAutoScalerLabelKey, CoreDNSAutoScalerLabelValue})
 	if err != nil {
 		return podList.Items[0], nil
 	}
