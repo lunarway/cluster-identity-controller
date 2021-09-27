@@ -78,13 +78,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = (&corecontrollers.PodReconciler{
-		Client:       mgr.GetClient(),
-		ConfigMapKey: configMapKey,
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Pod")
-		os.Exit(1)
-	}
 	if err = (&corecontrollers.NamespaceReconciler{
 		Client:       mgr.GetClient(),
 		ConfigMapKey: configMapKey,
