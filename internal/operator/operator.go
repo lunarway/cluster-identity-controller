@@ -23,8 +23,6 @@ const (
 	CoreDNSAutoScalerLabelKey   = "k8s-app"
 	CoreDNSAutoScalerLabelValue = "coredns-autoscaler"
 	CoreDNSAutoScalerNamespace  = "kube-system"
-
-	clusterName = ""
 )
 
 func GetClusterName(ctx context.Context, apiClient client.Client) (string, error) {
@@ -124,21 +122,16 @@ func find(needle string, stack []string) string {
 	return ""
 }
 
-// ClusterNameFromPod extracts the cluster name from a kube-controller-manager
+// CoreDNSAutoscalerClusterNameFromPod extracts the cluster name from a CoreDNSAutoscaler
 // Pod definition.
 func CoreDNSAutoscalerClusterNameFromPod(pod *corev1.Pod) (string, error) {
-	for _, container := range pod.Spec.Containers {
-		if container.Name != kubeControllerManagerContainerName {
-			continue
-		}
+	container := pod.Spec.Containers[0]
+	name := strings.SplitN(container.Env[0].Value, "-", 1)[0]
 
-		name := find(kubeControllerManagerContainerArgumentPrefix, container.Args)
-		if name == "" {
-			return "", fmt.Errorf("could not find '%s' flag in container '%s'", kubeControllerManagerContainerArgumentPrefix, container.Name)
-		}
-		return strings.TrimPrefix(name, kubeControllerManagerContainerArgumentPrefix), nil
+	if name == "" {
+		return "", fmt.Errorf("could not find '%s' flag in container '%s'", kubeControllerManagerContainerArgumentPrefix, container.Name)
 	}
-	return "", fmt.Errorf("could not find container with name '%s'", kubeControllerManagerContainerName)
+	return strings.TrimPrefix(name, kubeControllerManagerContainerArgumentPrefix), nil
 }
 func IsNamespaceInjectable(namespace corev1.Namespace) bool {
 	return namespace.Annotations[InjectionAnnotation] == "true"
