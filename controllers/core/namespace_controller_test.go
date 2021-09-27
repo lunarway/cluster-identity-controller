@@ -135,12 +135,8 @@ func TestNamespaceController(t *testing.T) {
 	})
 
 	t.Run("fail if cluster name cannot be detected", func(t *testing.T) {
-		controllerManagerPod = kubeControllerManagerPod(clusterName)
-		controllerManagerPod.Spec.Containers[0].Args = nil
-
 		reconciler, _ := setupNamespaceReconciler(t, configMapKey, []client.Object{
 			&injectableNamespace,
-			&controllerManagerPod,
 		})
 
 		result, err := reconciler.Reconcile(context.Background(), ctrl.Request{
@@ -149,8 +145,7 @@ func TestNamespaceController(t *testing.T) {
 				Name:      injectableNamespace.Name,
 			},
 		})
-
-		assert.EqualError(t, err, "could not find '--cluster-name=' flag in container 'kube-controller-manager'")
+		assert.EqualError(t, err, "could not detect cluster name")
 		assert.Equal(t, ctrl.Result{}, result)
 	})
 }
