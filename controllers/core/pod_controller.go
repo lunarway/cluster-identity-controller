@@ -64,7 +64,7 @@ func (r *PodReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 		return ctrl.Result{}, err
 	}
 
-	clusterName, err := operator.ClusterNameFromPod(&pod)
+	clusterName, err := operator.ClusterNameFromPod(pod)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
