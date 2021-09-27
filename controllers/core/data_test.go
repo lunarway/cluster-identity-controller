@@ -15,7 +15,7 @@ func corednsAutoscalerPod(clusterName string) corev1.Pod {
 			Kind:       "Pod",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "coredns-autoscaler-54d55c8b75-pwkq8",
+			Name:      "coredns-autoscaler-foo-bar",
 			Namespace: "kube-system",
 			Labels: map[string]string{
 				"k8s-app":           "coredns-autoscaler",

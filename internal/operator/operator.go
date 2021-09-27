@@ -31,16 +31,13 @@ const (
 )
 
 func GetClusterName(ctx context.Context, apiClient client.Client) (string, error) {
-	logger := log.FromContext(ctx)
 	// We need to try on strategy, and keep going to the next if the first failed
 
-	logger.Info("Trying to find clustername in KubeController")
 	clusterName, err := KubeControllerGetClusterName(ctx, apiClient)
 	if err != nil {
 		return "", err
 	}
 	if clusterName == "" {
-		logger.Info("Trying to find clustername in CoreDNSAutoscaler")
 		clusterName, err = CoreDNSAutoscalerGetClusterName(ctx, apiClient)
 	}
 	if err != nil {
@@ -53,14 +50,11 @@ func GetClusterName(ctx context.Context, apiClient client.Client) (string, error
 }
 
 func CoreDNSAutoscalerGetClusterName(ctx context.Context, apiClient client.Client) (string, error) {
-	logger := log.FromContext(ctx)
 	pod, err := getCoreDNSAutoscalerPod(ctx, apiClient)
 	if err != nil {
 		if err.Error() == "no autoscaler pod found" {
-			logger.Info("CoreDNSAutoscaler pod not found. Thats ok")
 			return "", nil
 		}
-		logger.Info(err.Error())
 		return "", err
 	}
 
@@ -68,32 +62,26 @@ func CoreDNSAutoscalerGetClusterName(ctx context.Context, apiClient client.Clien
 }
 
 func KubeControllerGetClusterName(ctx context.Context, apiClient client.Client) (string, error) {
-	logger := log.FromContext(ctx)
 	pod, err := getKubeControllerManagerPod(ctx, apiClient)
 	if err != nil {
 		if err.Error() == fmt.Sprintf("no %s found", kubeControllerManagerContainerName) {
-			logger.Info("KubeControllerManager pod not found. Thats ok")
 			return "", nil
 		}
-		logger.Info(fmt.Sprintf("Something went wrong while looking up KubeControllerManager Pod %s", err.Error()))
 		return "", err
 	}
-	logger.Info(fmt.Sprintf("KubeControllerManager pod found %s", pod.Name))
+
 	return KubeControllerClusterNameFromPod(&pod), nil
 }
 
 func getCoreDNSAutoscalerPod(ctx context.Context, apiClient client.Client) (corev1.Pod, error) {
 	var podList corev1.PodList
-	logger := log.FromContext(ctx)
-
 	err := apiClient.List(ctx, &podList, client.MatchingLabels{CoreDNSAutoScalerLabelKey: CoreDNSAutoScalerLabelValue}, client.InNamespace(CoreDNSAutoScalerNamespace))
 	if err != nil {
-		logger.Info(fmt.Sprintf("Error getting pod with label %s=%s", CoreDNSAutoScalerLabelKey, CoreDNSAutoScalerLabelValue))
 		return corev1.Pod{}, fmt.Errorf("no CoreDNSAutoscaler found")
 	}
+
 	for _, pod := range podList.Items {
-		if pod.Name == "coredns-autoscaler-54d55c8b75-pwkq8" {
-			logger.Info(fmt.Sprintf("Found CoreDNSAutoscaler pod %s", pod.Name))
+		if strings.HasPrefix(pod.Name, "coredns-autoscaler") {
 			return pod, nil
 		}
 	}
@@ -179,7 +167,6 @@ func CreateOrUpdateConfigMap(ctx context.Context, apiClient client.Client, nn ty
 		if err != nil {
 			return fmt.Errorf("create configmap: %w", err)
 		}
-
 		return nil
 	}
 
