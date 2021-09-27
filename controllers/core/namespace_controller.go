@@ -32,7 +32,8 @@ import (
 // NamespaceReconciler reconciles a Namespace object
 type NamespaceReconciler struct {
 	client.Client
-	ConfigMapKey string
+	ConfigMapKey      string
+	ClusterNameFinder *operator.ClusterNameFinder
 }
 
 //+kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch
@@ -60,7 +61,7 @@ func (r *NamespaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, nil
 	}
 
-	clusterName, err := operator.GetClusterName(ctx, r.Client)
+	clusterName, err := r.ClusterNameFinder.GetClusterName(ctx, r.Client)
 	if err != nil {
 		return ctrl.Result{}, err
 	}

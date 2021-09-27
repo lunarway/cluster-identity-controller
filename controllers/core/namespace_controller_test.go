@@ -5,6 +5,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/lunarway/cluster-identity-controller/internal/operator"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -30,8 +31,9 @@ func setupNamespaceReconciler(t *testing.T, configMapKey string, objects []clien
 		Build()
 
 	reconciler := &NamespaceReconciler{
-		Client:       client,
-		ConfigMapKey: configMapKey,
+		Client:            client,
+		ConfigMapKey:      configMapKey,
+		ClusterNameFinder: operator.NewClusterNameFinder(),
 	}
 
 	return reconciler, client
