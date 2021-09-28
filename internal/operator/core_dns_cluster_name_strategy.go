@@ -2,7 +2,6 @@ package operator
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	corev1 "k8s.io/api/core/v1"
@@ -18,31 +17,32 @@ const (
 type coreDNSClusterNameStrategy struct{}
 
 func (c *coreDNSClusterNameStrategy) GetClusterName(ctx context.Context, apiClient client.Client) (string, error) {
-	pod, err := getCoreDNSAutoscalerPod(ctx, apiClient)
+	pod, found, err := getCoreDNSAutoscalerPod(ctx, apiClient)
 	if err != nil {
-		if err.Error() == "no autoscaler pod found" {
-			return "", nil
-		}
 		return "", err
+	}
+
+	if !found {
+		return "", nil
 	}
 
 	return coreDNSAutoscalerClusterNameFromPod(pod, ctx), nil
 }
 
-func getCoreDNSAutoscalerPod(ctx context.Context, apiClient client.Client) (corev1.Pod, error) {
+func getCoreDNSAutoscalerPod(ctx context.Context, apiClient client.Client) (corev1.Pod, bool, error) {
 	var podList corev1.PodList
 	err := apiClient.List(ctx, &podList, client.MatchingLabels{coreDNSAutoScalerLabelKey: coreDNSAutoScalerLabelValue}, client.InNamespace(coreDNSAutoScalerNamespace))
 	if err != nil {
-		return corev1.Pod{}, fmt.Errorf("no CoreDNSAutoscaler found")
+		return corev1.Pod{}, false, err
 	}
 
 	for _, pod := range podList.Items {
 		if strings.HasPrefix(pod.Name, "coredns-autoscaler") {
-			return pod, nil
+			return pod, true, nil
 		}
 	}
 
-	return corev1.Pod{}, fmt.Errorf("no autoscaler pod found")
+	return corev1.Pod{}, false, nil
 }
 
 // coreDNSAutoscalerClusterNameFromPod extracts the cluster name from a CoreDNSAutoscaler
