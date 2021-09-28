@@ -45,19 +45,19 @@ func corednsAutoscalerPod(clusterName string) corev1.Pod {
 					Env: []corev1.EnvVar{
 						{
 							Name:  "KUBERNETES_PORT_443_TCP_ADDR",
-							Value: "lendifyqainfrauat-dns-42fc8372.hcp.westeurope.azmk8s.io",
+							Value: "clustername-dns-42fc8372.hcp.westeurope.azmk8s.io",
 						},
 						{
 							Name:  "KUBERNETES_PORT",
-							Value: "tcp://lendifyqainfrauat-dns-42fc8372.hcp.westeurope.azmk8s.io:443",
+							Value: "tcp://clustername-dns-42fc8372.hcp.westeurope.azmk8s.io:443",
 						},
 						{
 							Name:  "KUBERNETES_PORT_443_TCP",
-							Value: "tcp://lendifyqainfrauat-dns-42fc8372.hcp.westeurope.azmk8s.io:443",
+							Value: "tcp://clustername-dns-42fc8372.hcp.westeurope.azmk8s.io:443",
 						},
 						{
 							Name:  "KUBERNETES_SERVICE_HOST",
-							Value: "lendifyqainfrauat-dns-42fc8372.hcp.westeurope.azmk8s.io",
+							Value: "clustername-dns-42fc8372.hcp.westeurope.azmk8s.io",
 						},
 					},
 				},
