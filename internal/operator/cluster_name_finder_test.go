@@ -81,13 +81,13 @@ func TestClusterNameFinderGetClusterName(t *testing.T) {
 
 type fakeStrategy struct {
 	clusterName string
-	err error
+	err         error
 }
 
 func newFakeStrategy(clusterName string, err error) *fakeStrategy {
 	return &fakeStrategy{
 		clusterName: clusterName,
-		err: err,
+		err:         err,
 	}
 }
 
@@ -98,4 +98,3 @@ func (f *fakeStrategy) GetClusterName(context.Context, client.Client) (string, e
 
 	return f.clusterName, nil
 }
-
