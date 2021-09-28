@@ -2,7 +2,6 @@ package operator
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	corev1 "k8s.io/api/core/v1"
@@ -18,31 +17,32 @@ const (
 type kubeControllerStrategy struct{}
 
 func (k *kubeControllerStrategy) GetClusterName(ctx context.Context, apiClient client.Client) (string, error) {
-	pod, err := getKubeControllerManagerPod(ctx, apiClient)
+	pod, found, err := getKubeControllerManagerPod(ctx, apiClient)
 	if err != nil {
-		if err.Error() == fmt.Sprintf("no %s found", kubeControllerManagerContainerName) {
-			return "", nil
-		}
 		return "", err
+	}
+
+	if !found{
+		return "", nil
 	}
 
 	return kubeControllerClusterNameFromPod(&pod), nil
 }
 
-func getKubeControllerManagerPod(ctx context.Context, apiClient client.Client) (corev1.Pod, error) {
+func getKubeControllerManagerPod(ctx context.Context, apiClient client.Client) (corev1.Pod, bool, error) {
 	var podList corev1.PodList
 	err := apiClient.List(ctx, &podList, client.InNamespace(kubeControllerManagerNamespace))
 	if err != nil {
-		return corev1.Pod{}, err
+		return corev1.Pod{}, false, err
 	}
 
 	for _, pod := range podList.Items {
 		if IsKubeControllerPod(pod.Name) {
-			return pod, nil
+			return pod, true, nil
 		}
 	}
 
-	return corev1.Pod{}, fmt.Errorf("no %s found", kubeControllerManagerContainerName)
+	return corev1.Pod{}, false, nil
 }
 
 // KubeControllerClusterNameFromPod extracts the cluster name from a kube-controller-manager
