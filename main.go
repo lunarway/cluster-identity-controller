@@ -20,6 +20,7 @@ import (
 	"flag"
 	"os"
 
+	"github.com/lunarway/cluster-identity-controller/internal/operator"
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
@@ -79,8 +80,9 @@ func main() {
 	}
 
 	if err = (&corecontrollers.NamespaceReconciler{
-		Client:       mgr.GetClient(),
-		ConfigMapKey: configMapKey,
+		Client:            mgr.GetClient(),
+		ConfigMapKey:      configMapKey,
+		ClusterNameFinder: operator.NewClusterNameFinder(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Namespace")
 		os.Exit(1)
