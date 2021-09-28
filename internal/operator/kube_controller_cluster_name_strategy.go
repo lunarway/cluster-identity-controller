@@ -26,7 +26,7 @@ func (k *kubeControllerStrategy) GetClusterName(ctx context.Context, apiClient c
 		return "", err
 	}
 
-	return KubeControllerClusterNameFromPod(&pod), nil
+	return kubeControllerClusterNameFromPod(&pod), nil
 }
 
 func getKubeControllerManagerPod(ctx context.Context, apiClient client.Client) (corev1.Pod, error) {
