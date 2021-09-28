@@ -22,7 +22,7 @@ func (k *kubeControllerStrategy) GetClusterName(ctx context.Context, apiClient c
 		return "", err
 	}
 
-	if !found{
+	if !found {
 		return "", nil
 	}
 
