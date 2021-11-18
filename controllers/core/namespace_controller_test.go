@@ -25,6 +25,8 @@ func setupNamespaceReconciler(t *testing.T, configMapKey string, objects []clien
 	s.AddKnownTypes(corev1.SchemeGroupVersion, &corev1.NamespaceList{})
 	s.AddKnownTypes(corev1.SchemeGroupVersion, &corev1.Pod{})
 	s.AddKnownTypes(corev1.SchemeGroupVersion, &corev1.PodList{})
+	s.AddKnownTypes(corev1.SchemeGroupVersion, &corev1.Node{})
+	s.AddKnownTypes(corev1.SchemeGroupVersion, &corev1.NodeList{})
 
 	client := fake.NewClientBuilder().
 		WithObjects(objects...).
@@ -47,10 +49,34 @@ func TestNamespaceController(t *testing.T) {
 
 		controllerManagerPod     = kubeControllerManagerPod(clusterName)
 		coreDnsAutoScalerPod     = corednsAutoscalerPod(clusterName)
+		nodeWithClusterNameLabel = nodeWithClusterNameLabel(clusterName)
 		injectableNamespace      = injectableNamespace()
 		nonInjectableNamespace   = nonInjectableNamespace()
 		clusterIdentityConfigMap = clusterIdentityConfigMap(injectableNamespace.Name, configMapKey)
 	)
+
+	t.Run("update injectable namespaces via nodeLabel", func(t *testing.T) {
+		reconciler, client := setupNamespaceReconciler(t, configMapKey, []client.Object{
+			&injectableNamespace,
+			&nodeWithClusterNameLabel,
+			&clusterIdentityConfigMap,
+		})
+
+		result, err := reconciler.Reconcile(context.Background(), ctrl.Request{
+			NamespacedName: types.NamespacedName{
+				Namespace: injectableNamespace.Namespace,
+				Name:      injectableNamespace.Name,
+			},
+		})
+
+		assert.NoError(t, err)
+		assert.Equal(t, ctrl.Result{}, result)
+
+		checkNamespacesForConfigMap(t, client, injectableNamespace.Name, configMapKey, map[string]string{
+			"otherField":  "other",
+			"clusterName": clusterName,
+		})
+	})
 
 	t.Run("update injectable namespaces via CoreDnsAutoScalerPod", func(t *testing.T) {
 		reconciler, client := setupNamespaceReconciler(t, configMapKey, []client.Object{
