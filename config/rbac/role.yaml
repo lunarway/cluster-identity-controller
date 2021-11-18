@@ -28,7 +28,7 @@ rules:
 - apiGroups:
   - ""
   resources:
-  - pods
+  - nodes
   verbs:
   - get
   - list
@@ -36,7 +36,7 @@ rules:
 - apiGroups:
   - ""
   resources:
-  - nodes
+  - pods
   verbs:
   - get
   - list
