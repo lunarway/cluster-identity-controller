@@ -111,6 +111,22 @@ func kubeControllerManagerPod(clusterName string) corev1.Pod {
 	}
 }
 
+func nodeWithClusterNameLabel() corev1.Node {
+	return corev1.Node{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "Node",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "gke-node",
+			Labels: map[string]string{
+				"clusterName": "gcp-sandbox",
+			},
+		},
+		Spec: corev1.NodeSpec{},
+	}
+}
+
 func injectableNamespace() corev1.Namespace {
 	return corev1.Namespace{
 		TypeMeta: metav1.TypeMeta{

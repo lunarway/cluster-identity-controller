@@ -47,6 +47,7 @@ func TestNamespaceController(t *testing.T) {
 
 		controllerManagerPod     = kubeControllerManagerPod(clusterName)
 		coreDnsAutoScalerPod     = corednsAutoscalerPod(clusterName)
+		nodeWithClusterNameLabel = nodeWithClusterNameLabel()
 		injectableNamespace      = injectableNamespace()
 		nonInjectableNamespace   = nonInjectableNamespace()
 		clusterIdentityConfigMap = clusterIdentityConfigMap(injectableNamespace.Name, configMapKey)
