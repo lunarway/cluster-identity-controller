@@ -111,7 +111,7 @@ func kubeControllerManagerPod(clusterName string) corev1.Pod {
 	}
 }
 
-func nodeWithClusterNameLabel() corev1.Node {
+func nodeWithClusterNameLabel(clusterName string) corev1.Node {
 	return corev1.Node{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v1",
@@ -120,7 +120,7 @@ func nodeWithClusterNameLabel() corev1.Node {
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "gke-node",
 			Labels: map[string]string{
-				"clusterName": "gcp-sandbox",
+				"clusterName": clusterName,
 			},
 		},
 		Spec: corev1.NodeSpec{},

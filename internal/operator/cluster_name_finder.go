@@ -37,6 +37,7 @@ func NewClusterNameFinder() *ClusterNameFinder {
 		strategies: []clusterNameStrategy{
 			&kubeControllerStrategy{},
 			&coreDNSClusterNameStrategy{},
+			&nodeLabelStrategy{},
 		},
 	}
 }
