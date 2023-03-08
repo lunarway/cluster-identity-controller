@@ -80,7 +80,7 @@ func kubeControllerManagerPod(clusterName string) corev1.Pod {
 			Containers: []corev1.Container{
 				{
 					Name:  "kube-controller-manager",
-					Image: "k8s.gcr.io/kube-controller-manager:v1.20.8",
+					Image: "registry.k8s.io/kube-controller-manager:v1.20.8",
 					Command: []string{
 						"/usr/local/bin/kube-controller-manager",
 					},
